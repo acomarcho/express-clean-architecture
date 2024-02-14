@@ -18,14 +18,19 @@ export class RegisterController {
         return res.status(400).json(new ApiResponse(null, "Incomplete fields"));
       }
 
-      const { username, email, password } = requestValidationResult.data;
-      const data = await registerUseCase.register({
-        username,
-        email,
-        password,
-      });
+      try {
+        const { username, email, password } = requestValidationResult.data;
 
-      res.status(200).json(new ApiResponse(data));
+        const registerSuccessData = await this.registerUseCase.register({
+          username,
+          email,
+          password,
+        });
+
+        res.status(200).json(new ApiResponse(registerSuccessData));
+      } catch (error) {
+        res.status(500).json(new ApiResponse(null, error));
+      }
     });
   }
 

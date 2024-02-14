@@ -1,11 +1,7 @@
+import { UserDataAccess } from "./data-access";
 import { User } from "./entity";
 import { RegisterInputDto } from "./input-dto";
-import { RegisterOutputDto } from "./output-dto";
-
-export interface UserDataAccess {
-  getUserByEmail: (email: string) => Promise<User>;
-  insertUser: (user: User) => Promise<void>;
-}
+import { v4 as uuidv4 } from "uuid";
 
 export class RegisterUseCase {
   private userDataAccess: UserDataAccess;
@@ -18,21 +14,12 @@ export class RegisterUseCase {
     username,
     email,
     password,
-  }: RegisterInputDto): Promise<RegisterOutputDto> => {
-    const userToRegister = new User(
-      new Date().toISOString(),
-      username,
-      email,
-      password
-    );
+  }: RegisterInputDto): Promise<User> => {
+    const userToRegister = new User(uuidv4(), username, email, password);
 
-    await this.userDataAccess.insertUser(userToRegister);
+    const user = await this.userDataAccess.insertUser(userToRegister);
 
-    return {
-      username,
-      email,
-      password,
-    };
+    return user;
   };
 }
 

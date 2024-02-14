@@ -1,9 +1,10 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express } from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import { UserRepository } from "./user/repository";
 import { LoginUseCase, RegisterUseCase } from "./user/usecase";
 import { LoginController, RegisterController } from "./user/controller";
+import { PgPool } from "./persistence/postgres";
 
 dotenv.config();
 
@@ -12,7 +13,15 @@ app.use(bodyParser.json());
 
 const port = process.env.PORT || 3000;
 
-const userRepository = new UserRepository();
+const pgPool = new PgPool({
+  user: process.env.DB_USER || "postgres",
+  host: process.env.DB_HOST || "localhost",
+  database: process.env.DB_NAME || "clean_architecture",
+  password: process.env.DB_PASSWORD || "postgres",
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+});
+
+const userRepository = new UserRepository(pgPool);
 
 const registerUseCase = new RegisterUseCase(userRepository);
 const loginUseCase = new LoginUseCase(userRepository);
