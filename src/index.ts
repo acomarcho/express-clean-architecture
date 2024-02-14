@@ -2,7 +2,7 @@ import express, { Express } from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import { UserRepository } from "./user/repository";
-import { LoginUseCase, RegisterUseCase } from "./user/usecase";
+import { LoginUseCase, RegisterUseCase } from "./user/use-case";
 import { LoginController, RegisterController } from "./user/controller";
 import { PgPool } from "./persistence/postgres";
 

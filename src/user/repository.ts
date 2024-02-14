@@ -1,6 +1,7 @@
 import { User } from "./entity";
 import { UserDataAccess } from "./data-access";
 import { PgPool } from "../persistence/postgres";
+import { UserModel } from "./model";
 
 export class UserRepository implements UserDataAccess {
   pool: PgPool;
@@ -9,10 +10,36 @@ export class UserRepository implements UserDataAccess {
     this.pool = pool;
   }
 
-  getUserByEmail = (email: string) => {
-    return new Promise<User>((resolve) => {
-      resolve(new User("1", "2", "3", "4"));
-    });
+  getUserByEmail = async (email: string) => {
+    const client = await this.pool.getClient();
+
+    const users = await client.query<UserModel>(
+      `
+        SELECT
+          uuid,
+          username,
+          email,
+          password
+        FROM
+          users
+        WHERE
+          email = $1
+      `,
+      [email]
+    );
+
+    if (!users.rowCount) {
+      return null;
+    }
+
+    const userModel = users.rows[0];
+
+    return new User(
+      userModel.uuid,
+      userModel.username,
+      userModel.email,
+      userModel.password
+    );
   };
 
   insertUser = async (user: User) => {

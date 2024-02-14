@@ -1,14 +1,14 @@
 import express from "express";
-import { LoginUseCase, RegisterUseCase } from "./usecase";
-import { registerRequestSchema } from "./request";
 import { ApiResponse } from "../response";
+import { LoginIOBoundary, RegisterIOBoundary } from "./io-boundary";
+import { loginRequestSchema, registerRequestSchema } from "./request";
 
 export class RegisterController {
-  private registerUseCase;
+  private registerIOBoundary;
   private router;
 
-  constructor(registerUseCase: RegisterUseCase) {
-    this.registerUseCase = registerUseCase;
+  constructor(registerIOBoundary: RegisterIOBoundary) {
+    this.registerIOBoundary = registerIOBoundary;
     this.router = express.Router();
 
     this.router.post("/register", async (req, res) => {
@@ -21,15 +21,15 @@ export class RegisterController {
       try {
         const { username, email, password } = requestValidationResult.data;
 
-        const registerSuccessData = await this.registerUseCase.register({
+        const registerSuccessData = await this.registerIOBoundary.register({
           username,
           email,
           password,
         });
 
-        res.status(200).json(new ApiResponse(registerSuccessData));
+        return res.status(200).json(new ApiResponse(registerSuccessData));
       } catch (error) {
-        res.status(500).json(new ApiResponse(null, error));
+        return res.status(500).json(new ApiResponse(null, error));
       }
     });
   }
@@ -40,16 +40,40 @@ export class RegisterController {
 }
 
 export class LoginController {
-  private loginUseCase;
+  private loginIOBoundary;
   private router;
 
-  constructor(loginUseCase: LoginUseCase) {
-    this.loginUseCase = loginUseCase;
+  constructor(loginIOBoundary: LoginIOBoundary) {
+    this.loginIOBoundary = loginIOBoundary;
     this.router = express.Router();
 
-    this.router.post("/login", (req, res) => {
-      console.log(req);
-      res.status(200).json({ message: "ok" });
+    this.router.post("/login", async (req, res) => {
+      const requestValidationResult = loginRequestSchema.safeParse(req.body);
+
+      if (!requestValidationResult.success) {
+        return res.status(400).json(new ApiResponse(null, "Incomplete fields"));
+      }
+
+      try {
+        const { email, password } = requestValidationResult.data;
+
+        const loginSuccessData = await this.loginIOBoundary.loginByEmail({
+          email,
+          password,
+        });
+
+        if (!loginSuccessData) {
+          return res
+            .status(400)
+            .json(new ApiResponse({ success: false }, "Invalid credentials"));
+        }
+
+        return res
+          .status(200)
+          .json(new ApiResponse({ success: loginSuccessData }, null));
+      } catch (error) {
+        return res.status(500).json(new ApiResponse(null, error));
+      }
     });
   }
 

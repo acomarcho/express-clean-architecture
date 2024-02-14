@@ -3,3 +3,8 @@ export type RegisterInputDto = {
   email: string;
   password: string;
 };
+
+export type LoginInputDto = {
+  email: string;
+  password: string;
+};
